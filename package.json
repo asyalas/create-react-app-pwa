@@ -54,7 +54,7 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "pwa": "node scripts/build.js && npm run rm && node server ",
+    "pwa": "npm run build && npm run rm && node ./server ",
     "rm": "rm -rf ./server/pushSubscription.js",
     "test": "node scripts/test.js"
   },
