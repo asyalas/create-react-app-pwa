@@ -37,7 +37,6 @@ if ('serviceWorker' in navigator) {
     reg.onupdatefound = function () {
       var installingWorker = reg.installing
       installingWorker.onstatechange = function () {
-        console.log('[PWA的生命周期]',installingWorker.state)
         switch (installingWorker.state) {
           // case 'installed':
           case 'activated':
@@ -88,7 +87,7 @@ fetch('/getKey').then(res => {
       return false
     }
     navigator.serviceWorker.ready.then(function (reg) {
-      subscribe(reg, res.data.publicKey)
+      subscribe(reg, res.data)
     })
   }).catch(err => {
     console.log(err)

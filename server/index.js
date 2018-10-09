@@ -17,23 +17,24 @@ const checkSubscription = ()=>{
 }
 // 静态文件托管
 app.use(express.static('./dist'));
-
+// 1.生成公私钥
+var vapidKeys = webpush.generateVAPIDKeys();
+// 检测是否已订阅，模拟数据库，则拉出对应的公私钥
+const isExit = checkSubscription()
+if(isExit){
+    const userData = fs.readFileSync(pushSubscriptionPath,'utf-8')
+    vapidKeys = JSON.parse(userData)
+}
+// 2.设置公私钥
+webpush.setVapidDetails( 
+    'mailto:sender@example.com',
+    vapidKeys.publicKey,
+    vapidKeys.privateKey
+);
 // 获取公钥接口
 app.get('/getKey',function(req,res,next){
-    const isExit = checkSubscription()
-    if(!isExit){
-        // 1.生成公私钥
-        var vapidKeys = webpush.generateVAPIDKeys();
-        // 2.设置公私钥
-        webpush.setVapidDetails( 
-            'mailto:sender@example.com',
-            vapidKeys.publicKey,
-            vapidKeys.privateKey
-        );
-    }
-    console.log(`${isExit?'[该网站已被注册]':'[发送推送公钥]'}`)
     res.send({
-        data:vapidKeys,
+        data:vapidKeys.publicKey,
         isExit
     })
 })
@@ -41,22 +42,25 @@ app.get('/getKey',function(req,res,next){
 //保存订阅的推送对象
 //这里只是简单的实现，生产中请保存在数据库中
 app.get('/save',function(req,res,next){
-    fs.writeFile(pushSubscriptionPath, req.query.body,  function(err) {
+    const userData = {
+        pushSubscription:JSON.parse(req.query.body),
+        ...vapidKeys
+    }
+    fs.writeFile(pushSubscriptionPath, JSON.stringify(userData),  function(err) {
         if (err) {
             return console.error('推送注册失败',err);
         }
         console.log('[推送注册成功]')
     });
-   
 })
 
 //向订阅的浏览器发送消息
 app.get('/push',function(req,res,next){
 
-    const pushSubscription = fs.readFileSync(pushSubscriptionPath,'utf-8')
-    console.log('[准备推送]',pushSubscription)
-    if(pushSubscription){
-        webpush.sendNotification(JSON.parse(pushSubscription),'推送demo',{} )
+    const userData =JSON.parse( fs.readFileSync(pushSubscriptionPath,'utf-8'))
+    console.log('[准备推送]')
+    if(userData.pushSubscription){
+        webpush.sendNotification(userData.pushSubscription,'推送demo',{} )
         .then(data=>{
             console.log('[ 推送成功 ]',JSON.stringify(data))
         }).catch(function (err) {
@@ -69,8 +73,8 @@ app.get('/push',function(req,res,next){
   
 });
 
-app.listen(3005,() => {
-	console.log('app is running at: localhost:3005');
+app.listen(3004,() => {
+	console.log('app is running at: localhost:3004');
 });
 
 
