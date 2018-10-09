@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const fs = require('fs')
 const path = require('path')
-var webpush = require('web-push');
+const webpush = require('web-push');
 
 const appDirectory = fs.realpathSync(process.cwd());
 const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
