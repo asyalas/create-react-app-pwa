@@ -15,6 +15,18 @@ Progressive Web App, 简称 PWA，是提升 Web App 的体验的一种新方法�
  npm i
  npm run pwa
  ```
+### 脚本
+
+```js
+    npm run start  //启开发环境
+    npm run build  //打生产包
+    npm run server //启PWA的服务端
+    npm run rm //删除pushSubscription文件(此文件夹模拟装订阅对象的数据库)
+    npm run proxy  //在客户端无操作的时候模拟一次服务端推送
+    npm run mutiProxy //在客户端无操作的时候模拟多次服务端推送
+    npm run pwa //打包，删除pushSubscription文件，启PWA的服务端
+```
+
 ### PWA的前提条件
 
 - 要求 HTTPS 的环境，本地调试支持host为localhost 或者 127.0.0.1
