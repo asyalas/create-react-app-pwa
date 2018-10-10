@@ -33,6 +33,7 @@ function subscribe (serviceWorkerReg, publicKey) {
     })
 }
 if ('serviceWorker' in navigator) {
+  //注册serviceWorker
   navigator.serviceWorker.register('/service-worker.js').then(function (reg) {
     reg.onupdatefound = function () {
       var installingWorker = reg.installing
@@ -74,22 +75,37 @@ if ('serviceWorker' in navigator) {
         }
       }
     }
-  })
-    .catch(function (e) {
+  }).catch(function (e) {
       console.error('Error during service worker registration:', e)
     })
+  //监听serviceWorker通过postmessage传过来的信息
+  navigator.serviceWorker.addEventListener('message', function (e) {
+      var action = e.data;
+      console.log(`receive post-message from sw, action is '${e.data}'`);
+      switch (action) {
+          case 'go-baidu':
+              location.href = 'https://www.baidu.com';
+              break;
+          case 'go-github':
+              location.href = 'https://github.com/asyalas/create-react-app-pwa';
+              break;
+          default:
+          
+              break;
+      }
+  });
   //获取服务器端的公钥
-fetch('/getKey').then(res => {
-    return res.clone().json()
-  }).then(res => {
-    if(res.isExit){
-      console.log('[该网站已被注册]')
-      return false
-    }
-    navigator.serviceWorker.ready.then(function (reg) {
-      subscribe(reg, res.data)
+  fetch('/getKey').then(res => {
+      return res.clone().json()
+    }).then(res => {
+      if(res.isExit){
+        console.log('[该网站已被注册]')
+        return false
+      }
+      navigator.serviceWorker.ready.then(function (reg) {
+        subscribe(reg, res.data)
+      })
+    }).catch(err => {
+      console.log(err)
     })
-  }).catch(err => {
-    console.log(err)
-  })
 }

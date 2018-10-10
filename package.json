@@ -54,7 +54,10 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "pwa": "npm run build && npm run rm && node ./server ",
+    "server":"node ./server",
+    "proxy":"node ./server/proxy",
+    "mutiProxy":"node ./server/mutiProxy",
+    "pwa": "npm run build && npm run rm && npm run server ",
     "rm": "rm -rf ./server/pushSubscription.js",
     "test": "node scripts/test.js"
   },

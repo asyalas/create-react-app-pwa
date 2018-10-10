@@ -233,3 +233,127 @@ this.addEventListener('fetch', function (event) {
       
     });
   ```
+  - sw对推送的监听
+  ```js
+  //监听sw的push事件，发起推送
+    self.addEventListener('push', function (e) {
+    var data = e.data
+    if (e.data) {
+        try {
+        data = data.json()
+        } catch (error) {
+        data = data.text()
+        }
+        console.log('push的数据为：', data)
+        //浏览器推送api
+        self.registration.showNotification('来自PWA的推送',{})
+    })
+  ```
+
+  - 对推送ui的设置
+  通过对showNotification函数第一、二个参数进行设置，我们可以自定义推送的内容及ui
+ ```js
+    //第一参数 ： 标题 title
+    //第二参数 ： options
+    {
+        // 视觉相关
+        "body": "<String>",//内容
+        "icon": "<URL String>",//小图标
+        "image": "<URL String>",//预览图
+        "badge": "<URL String>",//手机上通知缩略信息小图标
+        "vibrate": "<Array of Integers>",//震动
+        "sound": "<URL String>",//声音
+        "dir": "<String of 'auto' | 'ltr' | 'rtl'>",//文字方向
+
+        // 行为相关
+        "tag": "<String>",//标签,同一地址的推送是否合并规则
+        "data": "<Anything>",
+        "requireInteraction": "<boolean>",//一直显示推送，不会自动消失
+        "renotify": "<Boolean>",//重新通知,配合tag使用
+        "silent": "<Boolean>",//推送的时候无震动和声音
+
+        // 视觉行为均会影响
+        "actions": "<Array of Objects>",//自定义按钮
+
+        // 定时发送时间戳
+        "timestamp": "<Long>"
+    }
+ ```
+ - 自定义按钮
+ 我们可以通过自定义按钮和监听sw的推送点击事件来自定义功能，如：跳转其他页面，唤起页面
+
+ - 1、自定义按钮对文案,id,icon
+ ```js
+ //service-worker.js
+ self.registration.showNotification('来自PWA的推送',{
+      ...
+      //推送的按钮
+      actions: [
+        {
+            action: 'go-baidu',
+            title: '去百度',
+            icon: '/favicon.ico'
+        },
+        {
+            action: 'go-github',
+            title: '去github',
+            icon: '/favicon.ico'
+        }
+      ]
+    })
+ ```
+ - 2、sw监听推送点击事件
+ ```js
+    //service-worker.js
+    self.addEventListener('notificationclick', event => {
+    switch (event.action) {
+        case 'go-baidu':
+            console.log('点击了去百度按钮');
+            break;
+        case 'go-github':
+            console.log('点击了去github按钮');
+            break;
+        default:
+            console.log(`Unknown action clicked: '${event.action}'`);
+            break;
+    }
+    event.notification.close();
+    event.waitUntil(
+        // 获取所有clients
+        self.clients.matchAll().then(function (clients) {
+            if (!clients || clients.length === 0) {
+                // 当不存在client时，打开该网站
+                self.clients.openWindow && self.clients.openWindow(' localhost:3004');
+                return;
+            }
+            // 切换到该站点的tab
+            console.log('[clients]',clients)
+            clients[0].focus && clients[0].focus();
+            clients.forEach(function (client) {
+            // 使用postMessage进行通信
+                client.postMessage(event.action);
+            });
+        })
+
+    )
+    });
+ ```
+ - 3、在网页的上下文中监听sw的message事件
+ 必须是在window下监听，否则无法操作dom
+ ```js
+ //监听serviceWorker通过postmessage传过来的信息
+  navigator.serviceWorker.addEventListener('message', function (e) {
+      var action = e.data;
+      console.log(`receive post-message from sw, action is '${e.data}'`);
+      switch (action) {
+          case 'go-baidu':
+              location.href = 'https://www.baidu.com';
+              break;
+          case 'go-github':
+              location.href = 'https://github.com/asyalas/create-react-app-pwa';
+              break;
+          default:
+              break;
+      }
+  });
+ ```
