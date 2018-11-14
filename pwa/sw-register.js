@@ -90,14 +90,11 @@ if ('serviceWorker' in navigator) {
               location.href = 'https://github.com/asyalas/create-react-app-pwa';
               break;
           default:
-          
               break;
       }
   });
   //获取服务器端的公钥
-  fetch('/getKey').then(res => {
-      return res.clone().json()
-    }).then(res => {
+  fetch('/getKey').then(res => res.clone().json()).then(res => {
       if(res.isExit){
         console.log('[该网站已被注册]')
         return false
@@ -108,4 +105,26 @@ if ('serviceWorker' in navigator) {
     }).catch(err => {
       console.log(err)
     })
+   // 监控页面是否奔溃
+  if (navigator.serviceWorker.controller !== null) {
+    let HEARTBEAT_INTERVAL = 5 * 1000 // 每五秒发一次心跳
+    let sessionId = Date.now()
+    let heartbeat = function () {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'heartbeat',
+        id: sessionId,
+        data: {
+          p: location.pathname
+        } // 附加信息，如果页面 crash，上报的附加数据
+      })
+    }
+    window.addEventListener('beforeunload', function () {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'unload',
+        id: sessionId
+      })
+    })
+    setInterval(heartbeat, HEARTBEAT_INTERVAL)
+    heartbeat()
+  }
 }

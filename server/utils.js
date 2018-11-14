@@ -56,5 +56,6 @@ const readSubscription = ()=>{
     pushSubscriptionPath,
     checkSubscription,
     readSubscription,
-    writeSubscription
+    writeSubscription,
+    resolveApp
   }

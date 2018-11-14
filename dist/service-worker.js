@@ -1,4 +1,4 @@
-importScripts("/precache-manifest.16b18a1595fee6f23b159b61206f3262.js", "/workbox-v3.6.2/workbox-sw.js");
+importScripts("/precache-manifest.43b8108ff3750cbe29c403ed43b70533.js", "/workbox-v3.6.2/workbox-sw.js");
 workbox.setConfig({modulePathPrefix: "/workbox-v3.6.2"});
 
 
@@ -93,29 +93,38 @@ workbox.precaching.suppressWarnings()
 // 设置需要缓存的url，默认为__precacheManifest文件里的数组
 workbox.precaching.precacheAndRoute(self.__precacheManifest || [])
 
-/**
-* example runningCache with api
-*/
-// workbox.routing.registerRoute(/^https:\/\/lavas\.baidu\.com\/some\/api/,
-//     workbox.strategies.networkFirst());
-
-/**
-* example runningCache with resources from CDN
-* including maxAge, maxEntries
-* cacheableResponse is important for CDN
-*/
-// workbox.routing.registerRoute(/^https:\/\/cdn\.baidu\.com/i,
-//     workbox.strategies.cacheFirst({
-//         cacheName: 'lavas-cache-images',
-//         plugins: [
-//             new workbox.expiration.Plugin({
-//                 maxEntries: 100,
-//                 maxAgeSeconds: 7 * 24 * 60 * 60
-//             }),
-//             new workbox.cacheableResponse.Plugin({
-//                 statuses: [0, 200]
-//             })
-//         ]
-//     })
-// );
-
+// 监控网页是否崩溃
+const CHECK_CRASH_INTERVAL = 10 * 1000 // 每 10s 检查一次
+const CRASH_THRESHOLD = 15 * 1000 // 15s 超过15s没有心跳则认为已经 crash
+const pages = {}
+let timer
+function checkCrash () {
+  const now = Date.now()
+  for (var id in pages) {
+    let page = pages[id]
+    if ((now - page.t) > CRASH_THRESHOLD) {
+      fetch(`/crash?body=${JSON.stringify(page)}`)
+    }
+  }
+  if (Object.keys(pages).length === 0) {
+    clearInterval(timer)
+    timer = null
+  }
+}
+self.addEventListener('message', (e) => {
+  const data = e.data
+  switch (data.type) {
+    case 'heartbeat':
+      pages[data.id] = {
+        t: Date.now(),
+        ...data.data
+      }
+      if (!timer) {
+        timer = setInterval(function () {
+          checkCrash()
+        }, CHECK_CRASH_INTERVAL)
+      };break
+    case 'unload': delete pages[data.id]; break
+    default:break
+  }
+})

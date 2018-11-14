@@ -1,7 +1,8 @@
 const express = require('express');
+const fs = require('fs')
 const app = express();
 const webpush = require('web-push');
-const {checkSubscription,readSubscription,writeSubscription} =require('./utils')
+const {checkSubscription,readSubscription,writeSubscription ,resolveApp} =require('./utils')
 // 静态文件托管
 app.use(express.static('./dist'));
 // 1.生成公私钥
@@ -34,7 +35,6 @@ app.get('/save',function(req,res,next){
     }
     writeSubscription(userData)
 })
-
 //向订阅的浏览器发送消息
 app.get('/push',function(req,res,next){
 
@@ -63,6 +63,100 @@ app.get('/push',function(req,res,next){
   
 });
 
+/**
+ * 基于PWA来做浏览器崩溃监测
+ */
+app.get('/crash',function(req,res,next){
+	const data = JSON.parse(req.query.body)
+    // debugger
+    console.log(`网页${data.p}已崩溃`)
+})
+
+/**
+ * 服务器缓存策略
+ * ** */
+
+const reponseHandle = (req,res,cacheHandle)=>{
+    const filepath = resolveApp(`./static/${req.path}`)
+    try {
+        const stat = fs.statSync(filepath)
+        const img = fs.readFileSync(filepath)
+        res.set('Content-Type', 'image/jpeg');
+        var isNpSend = cacheHandle(stat)
+        //缓存策略
+        !isNpSend && res.send(new Buffer(img));
+    } catch (error) {
+        console.log(error)
+        res.statusCode = 404
+          res.end('Not Found') 
+    }
+}
+
+/**
+ * Expires
+ * http 1.0
+ * **/ 
+app.get('/1.jpg',function(req,res,next){
+    reponseHandle(req,res,()=>{
+        res.setHeader('Expires', new Date(Date.now() + 10 * 1000).toUTCString())
+    })
+})
+
+/**
+ * cache-control
+ * http 1.1
+ * 优先级 ： cache-control > Expires
+ * **/
+app.get('/2.jpg',function(req,res,next){
+    reponseHandle(req,res,()=>{
+        res.setHeader('Expires', new Date(Date.now() + 10 * 1000).toUTCString())
+        res.setHeader('Cache-Control', 'max-age=20')
+    })
+})
+
+/**
+ * Last-Modified & if-modified-since
+ * http 1.0
+ * 如果断网的话，会有一定时间是直接读取缓存
+ * **/
+app.get('/3.jpg',function(req,res,next){
+    reponseHandle(req,res,(stat)=>{
+        let ifModifiedSince = req.headers['if-modified-since']
+        let LastModified = stat.ctime.toGMTString()
+        if(!!ifModifiedSince && LastModified === ifModifiedSince){
+            res.statusCode = 304
+            res.end()
+            return true
+        }
+        if(!ifModifiedSince  || (!!ifModifiedSince && LastModified !== ifModifiedSince)){
+            res.setHeader('Last-Modified', LastModified)
+        }
+        
+    })
+})
+/**
+ * ETag & If-None-Match
+ * http 1.1
+ * **/
+app.get('/4.jpg',function(req,res,next){
+    reponseHandle(req,res,(stat)=>{
+        let ifNoneMatch = req.headers['if-none-match']
+        let etag = '1212121212121212'
+        if(!ifNoneMatch || (!!ifNoneMatch && ifNoneMatch!== etag)){
+            res.setHeader('ETag', etag)
+        }
+        if(!!ifNoneMatch && ifNoneMatch === etag){
+            res.statusCode = 304
+            res.end()
+            return true
+        }
+        
+    })
+})
+
+/**
+ * 监听3004
+ * ** */
 app.listen(3004,() => {
 	console.log('app is running at: localhost:3004');
 });

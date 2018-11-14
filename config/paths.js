@@ -56,7 +56,7 @@ module.exports = {
   servedPath: getServedPath(resolveApp('package.json')),
 
   //pwa config
-  swPath:resolveApp('src/sw-register.js'),
-  swSrc:resolveApp('src/service-worker.js'),
+  swPath:resolveApp('pwa/sw-register.js'),
+  swSrc:resolveApp('pwa/service-worker.js'),
   swDest:resolveApp('dist/service-worker.js'),
 };

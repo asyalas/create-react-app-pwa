@@ -1,4 +1,4 @@
-'use strict';
+
 
 const path = require('path');
 const webpack = require('webpack');
@@ -482,7 +482,8 @@ module.exports = {
           /^manifest.*\.js(?:on)?$/,
           /\.hot-update\.js$/,
           /sw-register\.js/,
-          /.DS_Store/
+          /.DS_Store/,
+          /.jpg/
           ] 
     }),
     // Generate a service worker script that will precache, and keep up to date,

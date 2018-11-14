@@ -3,6 +3,9 @@
 ### 前文
 Progressive Web App, 简称 PWA，是提升 Web App 的体验的一种新方法，能给用户原生应用的体验。 create-react-app在2.0版本后，自动加上了对server worker的配置，本项目是基于create-react-app2.0版本的增强，添加了推送功能，修改了缓存策略以及增加了web app的兼容和配置。
 
+### 更新日记
+- 2018-11-02 增加http缓存的demo
+- 2018-11-14 增加基于PWA做的网页崩溃demo（注：需要手动在控制台写一个死循环来触发网页崩溃，看是否监控到）
 ### 传送门
 - [create-react-app](https://github.com/facebook/create-react-app)
 - [PWA中文文档](https://lavas.baidu.com/pwa)
